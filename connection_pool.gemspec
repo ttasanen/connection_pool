@@ -1,9 +1,8 @@
 # -*- encoding: utf-8 -*-
-require './lib/connection_pool/version'
 
 Gem::Specification.new do |s|
   s.name        = 'connection_pool'
-  s.version     = ConnectionPool::VERSION
+  s.version     = '2.2.0'
   s.platform    = Gem::Platform::RUBY
   s.authors     = ['Mike Perham', 'Damian Janowski']
   s.email       = ['mperham@gmail.com', 'damian@educabilia.com']

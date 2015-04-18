@@ -119,7 +119,7 @@ class ConnectionPool
     ::Thread.current[@key] ||= []
   end
 
-  class Wrapper < ::BasicObject
+  class Wrapper < ::BasicObject # :nodoc:
     METHODS = [:with, :pool_shutdown]
 
     def initialize(options = {}, &block)
