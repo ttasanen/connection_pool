@@ -59,6 +59,19 @@ class TestConnectionPool < Minitest::Test
     end
   end
 
+  def with_thread_report_on_exception_disabled(&block)
+    if Thread.respond_to? :report_on_exception # ruby >= 2.4
+      report_on_exception_original_value = Thread.report_on_exception
+      Thread.report_on_exception = false
+    end
+
+    block.call
+
+    if Thread.respond_to? :report_on_exception
+      Thread.report_on_exception = report_on_exception_original_value
+    end
+  end
+
   def test_basic_multithreaded_usage
     pool_size = 5
     pool = ConnectionPool.new(size: pool_size) { NetworkConnection.new }
@@ -108,8 +121,10 @@ class TestConnectionPool < Minitest::Test
     pool = ConnectionPool.new(timeout: 0, size: 1) { Object.new }
 
     pool.with do
-      assert_raises Timeout::Error do
-        Thread.new { pool.checkout }.join
+      with_thread_report_on_exception_disabled do
+        assert_raises Timeout::Error do
+          Thread.new { pool.checkout }.join
+        end
       end
     end
 
@@ -195,8 +210,10 @@ class TestConnectionPool < Minitest::Test
     pool = ConnectionPool.new(timeout: 0, size: 1) { NetworkConnection.new }
     conn = pool.checkout
 
-    assert_raises Timeout::Error do
-      Thread.new { pool.checkout }.join
+    with_thread_report_on_exception_disabled do
+      assert_raises Timeout::Error do
+        Thread.new { pool.checkout }.join
+      end
     end
 
     pool.checkin
@@ -238,10 +255,12 @@ class TestConnectionPool < Minitest::Test
 
     pool.checkin
 
-    assert_raises Timeout::Error do
-      Thread.new do
-        pool.checkout
-      end.join
+    with_thread_report_on_exception_disabled do
+      assert_raises Timeout::Error do
+        Thread.new do
+          pool.checkout
+        end.join
+      end
     end
 
     pool.checkin
@@ -466,10 +485,12 @@ class TestConnectionPool < Minitest::Test
     wrapper = ConnectionPool::Wrapper.new(timeout: 0, size: 1) { Object.new }
 
     wrapper.with do
-      assert_raises Timeout::Error do
-        Thread.new do
-          wrapper.with { flunk 'connection checked out :(' }
-        end.join
+      with_thread_report_on_exception_disabled do
+        assert_raises Timeout::Error do
+          Thread.new do
+            wrapper.with { flunk 'connection checked out :(' }
+          end.join
+        end
       end
     end
 
